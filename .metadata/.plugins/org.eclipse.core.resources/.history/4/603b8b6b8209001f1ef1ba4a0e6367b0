@@ -1,0 +1,70 @@
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+
+public class register {
+
+	private Page page;
+
+	@BeforeMethod
+	public void setUp() {
+
+		Playwright playwright = Playwright.create();
+		Browser browser = playwright.chromium()
+				.launch(new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(false));
+		page = browser.newPage();
+		page.navigate("https://demo.nopcommerce.com/");
+	}
+
+	@Test(priority = 1)
+	public void valid_register() throws InterruptedException {
+		page.click("text=Log in");
+		page.locator(".register-button").click();
+		System.out.println(page.title());
+		page.locator("#gender-male").click();
+		page.fill("input[name='FirstName']", "Enio");
+		page.fill("input[name='LastName']", "Demneri");
+		page.locator("select[name='DateOfBirthDay']").selectOption("30");
+		page.locator("select[name='DateOfBirthMonth']").selectOption("May");
+		page.locator("select[name='DateOfBirthYear']").selectOption("1990");
+		page.fill("input[type='Email']", "test.playwright@mail.com");
+
+		page.fill("#Company", "My Personal Company");
+
+		// checkbox
+		page.locator("#Newsletter").uncheck();
+		page.locator("#Newsletter").check();
+		assert page.locator("#Newsletter").isChecked();
+
+		page.fill("#Password", "Test1234!");
+		page.fill("#ConfirmPassword", "Test1234!");
+		Thread.sleep(3000);
+
+		page.locator("#register-button").click();
+		assert page.getByText("Your registration completed").isVisible();
+		
+		page.click("text='Continue'");
+		page.locator(".ico-logout").click();
+		assert page.locator(".register-button").isVisible();
+	}
+
+//	@Test(priority = 2)
+//	public void invalid_register() {
+//		page.click("text=Log in");
+//		page.locator(".register-button").click();
+//		page.locator("#gender-male").click();
+//		page.locator("select[name='DateOfBirthDay']").selectOption("30");
+//		page.locator("select[name='DateOfBirthMonth']").selectOption("July");
+//		page.locator("select[name='DateOfBirthYear']").selectOption("1995");
+//		page.locator("#register-button").click();
+//		
+//
+//	}
+
+}
+
+//}

@@ -1,0 +1,40 @@
+
+import org.testng.Assert;
+
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+
+public class login {
+	
+	private Page page;
+	
+	public void loginTest() {
+		
+		Playwright playwright = Playwright.create();
+		Browser browser = playwright.chromium()
+				.launch(new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(false));
+		page = browser.newPage();
+		page.navigate("https://demo.nopcommerce.com/");
+		
+		page.locator(".ico-login").click();
+		assert page.getByText("Returning Customer").isVisible();
+		
+		 page.fill(".email", "test.playwright3@gmail.com");
+		 page.fill("#Password", "Test1234!");
+		 page.locator("#RememberMe").check();
+		 assert page.locator("#RememberMe").isChecked();
+		 
+		 page.locator(".login-button").click();
+		 
+		 Assert.assertEquals(page.innerText(".topic-block-title > h2"), "Welcome to our store");
+		 assert page.locator(".ico-logout").isVisible();
+		 page.click("ico-logout");
+		 assert page.locator(".ico-login").isVisible();
+		 
+		 
+		 
+	}
+
+}

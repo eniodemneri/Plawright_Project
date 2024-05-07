@@ -1,0 +1,31 @@
+import org.testng.annotations.Test;
+
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+
+public class register {
+
+	
+	private Page page;
+	
+	@Test
+	public void setUp() {
+		
+		Playwright playwright = Playwright.create();
+		Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(false));
+		page = browser.newPage();
+		page.navigate("https://demo.nopcommerce.com/");
+	}
+	
+	@Test
+	public void register() {
+		page.click("text=Log in");
+		page.querySelector(".register-button").click();
+		
+	}
+
+	}
+
+//}

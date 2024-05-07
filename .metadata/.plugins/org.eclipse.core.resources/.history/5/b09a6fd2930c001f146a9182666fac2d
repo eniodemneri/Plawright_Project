@@ -1,0 +1,75 @@
+package Test;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.Page.ScreenshotOptions;
+
+public class empty_shopping_cart {
+	private Playwright playwright;
+	private Browser browser;
+	private Page page;
+
+	@BeforeMethod
+	public void setUp() {
+
+		playwright = Playwright.create();
+		ArrayList<String> arguments = new ArrayList<>();
+		arguments.add("--start-maximized");
+		browser = playwright.chromium()
+				.launch(new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(false).setArgs(arguments));
+		BrowserContext context = browser.newContext(new Browser.NewContextOptions().setViewportSize(null));
+		ScreenshotOptions screenshotOptions = new ScreenshotOptions();
+		page.screenshot(screenshotOptions.setPath(Paths.get("./screenshot/screenshot.png")));
+		page = context.newPage();
+		page.setDefaultTimeout(30000);
+		page.navigate("https://demo.nopcommerce.com/login");
+
+	}
+
+	@Test
+	public void emptyShoppingCart() {
+
+		page.fill(".email", "test.playwright3@mail.com");
+		page.fill("#Password", "Test1234!");
+		page.locator(".login-button").click();
+		
+		page.waitForTimeout(2000);
+		page.locator(".cart-label").hover();
+		page.locator(".mini-shopping-cart > div.buttons > button").click();
+		
+		page.waitForTimeout(1000);
+		int initialItemCount = page.querySelectorAll("table.cart > tbody >tr").size();
+		page.locator(".cart >tbody > tr:first-child > td.remove-from-cart >button").click();
+
+		page.waitForTimeout(1000);
+		int updatedCount = page.querySelectorAll("table.cart > tbody >tr").size();
+		if (updatedCount == initialItemCount - 1) {
+			System.out.print("is decreased by 1");
+		} else {
+			System.out.println("is not decreased");
+		}
+
+		page.locator(".cart >tbody > tr:first-child > td.remove-from-cart >button").click();
+
+		page.waitForTimeout(1000);
+		page.locator(".cart >tbody > tr:first-child > td.remove-from-cart >button").click();
+		page.waitForTimeout(1000);
+		assert page.getByText("Your Shopping Cart is empty!").isVisible();
+
+	}
+
+	@AfterMethod
+	public void closeUp() {
+		browser.close();
+		playwright.close();
+	}
+
+}

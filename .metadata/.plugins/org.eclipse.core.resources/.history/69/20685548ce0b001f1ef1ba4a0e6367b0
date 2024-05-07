@@ -1,0 +1,147 @@
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+
+import org.junit.jupiter.api.Assertions;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
+
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+
+public class dashboard {
+
+	public void login() {
+
+	}
+
+	private Page page;
+
+	@Test(priority = 1)
+	public void dashboard_nav() throws InterruptedException {
+		Playwright playwright = Playwright.create();
+		Browser browser = playwright.chromium()
+				.launch(new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(false));
+		page = browser.newPage();
+		page.setDefaultTimeout(30000);
+		page.navigate("https://demo.nopcommerce.com/login");
+
+		page.fill(".email", "test.playwright@mail.com");
+		page.fill("#Password", "Test1234!");
+		page.locator(".login-button").click();
+
+		page.locator(".notmobile > li:first-child").hover();
+		page.click("text=Notebooks");
+
+		page.locator("#products-pagesize").selectOption("9");
+
+		int gridItems = page.locator(".item-grid > .item-box").count();
+		System.out.println(gridItems);
+		assert gridItems == 6;
+
+		Thread.sleep(1000);
+		page.locator(".filter-content > ul:nth-child(2) > li:nth-child(4) > input").check();
+
+		Thread.sleep(3000);
+		int filterItem = page.locator(".item-grid > .item-box").count();
+		// page.waitForSelector(".item-grid > .item-box", new
+		// Page.WaitForSelectorOptions().setTimeout(5000));
+		System.out.println(filterItem);
+		assert filterItem == 1;
+
+		page.locator(".filter-content > ul:nth-child(2) > li:nth-child(4) > input").uncheck();
+		Thread.sleep(2000);
+		int unfilterItems = page.locator(".item-grid > .item-box").count();
+		System.out.println(unfilterItems);
+		assert unfilterItems == 6;
+		Thread.sleep(2000);
+		page.locator(".item-box:nth-child(2) > div > div.details > div.add-info > div > button.add-to-wishlist-button")
+				.click();
+		Thread.sleep(1000);
+		page.locator(".item-box:nth-child(3) > div > div.details > div.add-info > div > button.add-to-wishlist-button")
+				.click();
+		Thread.sleep(2000);
+		page.locator(
+				".item-box:nth-child(4) > div > div.details > div.add-info > div > button.product-box-add-to-cart-button")
+				.click();
+		Thread.sleep(1000);
+		page.locator(
+				".item-box:nth-child(5) > div > div.details > div.add-info > div > button.product-box-add-to-cart-button")
+				.click();
+		Thread.sleep(1000);
+		page.locator(
+				".item-box:nth-child(6) > div > div.details > div.add-info > div > button.product-box-add-to-cart-button")
+				.click();
+		Thread.sleep(2000);
+
+		String wishlistText = page.textContent("span[class='wishlist-qty']");
+		int wishlistCount = Integer.parseInt(wishlistText.trim().replaceAll("[(){}]", ""));
+		System.out.println(wishlistCount);
+		assert wishlistCount == 2;
+
+		String cartText = page.textContent("span[class='cart-qty']");
+		int cartCount = Integer.parseInt(cartText.trim().replaceAll("[(){}]", ""));
+		Thread.sleep(2000);
+		System.out.println(cartCount);
+		assert cartCount == 3;
+
+//		browser.close();
+//		playwright.close();
+
+	}
+
+	@Test(priority = 2, dependsOnMethods = {"dashboard_nav"})
+	public void shopping_cart() throws InterruptedException {
+
+		page.locator(".cart-label").hover();
+		assert page.locator(".mini-shopping-cart > div.buttons > button").isVisible();
+		page.locator(".mini-shopping-cart > div.buttons > button").click();
+		String url = page.url();
+		System.out.println(url);
+		Assert.assertEquals(url, "https://demo.nopcommerce.com/cart");
+		assert page.locator(".continue-shopping-button").isVisible();
+		assert page.locator(".estimate-shipping-button").isVisible();
+		
+		double totalPrice = 0.0;
+		
+		for(int i=1; i <=3; i++) {
+			String itemPriceSelector = String.format(".product-subtotal", i);
+			String itemPriceText = page.textContent(itemPriceSelector);
+			double itemPrice = Double.parseDouble(itemPriceText.replaceAll("[^0-9.]", ""));
+			totalPrice += itemPrice;
+		}
+		Thread.sleep(10000);
+		
+		double totalPriceCart = Double.parseDouble(page.textContent(".order-total > .cart-total-right > span > strong").replaceAll("[^0-9.]", ""));
+		assert totalPrice == totalPriceCart : "Sum of prices of item (" + totalPrice + ") does match the total in the cart(" + totalPriceCart + ")";
+
+	}
+	
+	@Test(priority=3)
+	public void emptyShoppingCart() {
+		
+		int initialItemCount = page.querySelectorAll("table.cart > tbody >tr").size();
+		System.out.println(initialItemCount);
+		page.locator(".cart >tbody > tr:first-child > td.remove-from-cart >button").click();
+		
+		int updatedCount = page.querySelectorAll("table.cart > tbody >tr").size();
+		if(updatedCount == initialItemCount - 1) {
+			System.out.print("is decreased by 1");
+		}else {
+			System.out.println("is not decreased");
+		}
+		
+		page.locator(".cart >tbody > tr:first-child > td.remove-from-cart >button").click();
+		
+		System.out.println(updatedCount);
+		page.locator(".cart >tbody > tr:first-child > td.remove-from-cart >button").click();
+		
+		assert updatedCount == 0;
+		
+		
+	}
+}
+
+		
